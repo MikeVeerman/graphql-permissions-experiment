@@ -1,0 +1,27 @@
+{
+  "name": "graphql-permissions-experiment",
+  "version": "1.0.0",
+  "description": "AIV : experiment with permissions on GraphQL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MikeVeerman/graphql-permissions-experiment.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MikeVeerman/graphql-permissions-experiment/issues"
+  },
+  "homepage": "https://github.com/MikeVeerman/graphql-permissions-experiment#readme",
+  "dependencies": {
+    "apollo-server-express": "^1.3.2",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
+    "graphql": "^0.13.2",
+    "graphql-tools": "^2.23.1",
+    "lodash": "^4.17.5"
+  }
+}
