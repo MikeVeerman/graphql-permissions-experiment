@@ -6,14 +6,27 @@ const { makeExecutableSchema } = require('graphql-tools');
 
 // The GraphQL schema as a String
 const typeDefs = `
-  type Query { articles: [Article] }
-  type Article { title: String, body: String }
+    type Query { 
+        articles: [Article] 
+        article(id:Int!):Article
+    }
+    type Article { 
+        id: Int! 
+        title: String 
+        body: String 
+        bodyLength: Int
+    }
+    
 `;
 
 // The resolvers
 const resolvers = {
-  Query: { 
-      articles: (_root, _params, ctx ) => retrieveTheArticles(ctx)
+    Query: { 
+        articles: (_root, _params, ctx ) => retrieveTheArticles(ctx),
+        article: (_root, {id}, ctx) => retrieveOneArticle(id, ctx)
+    },
+    Article: {
+        bodyLength: (article) => article.body.length
     }
 }
 
@@ -23,16 +36,19 @@ const resolvers = {
 const retrieveTheArticles = function (ctx){
     const articles = [
         {
+            id: 1,
             title: "Some amazing article.",
             body: "You've seen a lot of articles, but this is really something else.",
             permission: "everyone"
         },
         {
+            id: 2,
             title: "Extremely average article.",
             body: "There is nothing remarkable about this, but at least it's free.",
             permission: "everyone"
         },
         {
+            id: 3,
             title: "New passwords for the members",
             body: "The new password for the club house is 'Excalibur'. Don't tell the plebeians....",
             permission: "members"
@@ -46,6 +62,12 @@ const retrieveTheArticles = function (ctx){
     } else if (ctx.role === 'MEMBER'){
         return articles;
     } 
+}
+
+//Find one article from the "external" source.
+const retrieveOneArticle = (id, ctx) => {
+    const allArticles = retrieveTheArticles(ctx);
+    return find(allArticles, {id:id});
 }
 
 // makeExecutableSchema turns the GraphQL schema and the resolvers into 
