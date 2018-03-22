@@ -4,81 +4,81 @@ const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
 
-// Het GraphQL schema in String formaat
+// The GraphQL schema as a String
 const typeDefs = `
   type Query { articles: [Article] }
   type Article { title: String, body: String }
 `;
 
-// De resolvers
+// The resolvers
 const resolvers = {
   Query: { 
       articles: (_root, _params, ctx ) => retrieveTheArticles(ctx)
     }
 }
 
-//Hier halen we de gegevens op uit een "externe" bron
-//In dit geval zal de de bron checken of de gebruiker al dan niet toegang heeft
+//Here we retrieve the data from the "external" source
+//This source checks if we're allowed to access the members-only articles
+//based on the context
 const retrieveTheArticles = function (ctx){
     const articles = [
         {
-            title: "Nieuwe regeling woonbonus",
-            body: "Vanaf 2016 tellen er nieuwe regels voor de woonbonus.",
+            title: "Some amazing article.",
+            body: "You've seen a lot of articles, but this is really something else.",
             permission: "everyone"
         },
         {
-            title: "Werken als 50-plusser",
-            body: "Elke werkzoekende boven de 50 krijgt extra ondersteuning van VDAB.",
+            title: "Extremely average article.",
+            body: "There is nothing remarkable about this, but at least it's free.",
             permission: "everyone"
         },
         {
-            title: "Nieuwe deotologische code notarissen",
-            body: "Op 1 januari wordt de nieuwe deontologische code voor notarissen van kracht.",
-            permission: "notaris"
+            title: "New passwords for the members",
+            body: "The new password for the club house is 'Excalibur'. Don't tell the plebeians....",
+            permission: "members"
         }
     
     ]
 
-    //Permissie systeem aan de kant van de bron.
-    const role = ctx.user.role;
-    if (role === 'PUBLIC') {
+    //Permission system.
+    if (ctx.role === 'PUBLIC') {
         return filter(articles, {permission:'everyone'});
-    } else if (role === 'NOTARIS'){
+    } else if (ctx.role === 'MEMBER'){
         return articles;
     } 
 }
 
-// We bouwen het schema uit de types en de resolvers
+// makeExecutableSchema turns the GraphQL schema and the resolvers into 
+// an active component.
 const schema = makeExecutableSchema({
   typeDefs,
   resolvers,
 });
 
-//Hier lezen we de request headers en zetten we de rollen op de context.
-//In de praktijk zal dit hier met een aparte "RBAC" module verbinden
-//Dit kan op basis van HTTP headers, JWT, OpenId, OAuth, ...
-const getUserFromRequest = function(req) {
-    const role = (req.get('credentials') === 'IkBenEenNotaris') ? 'NOTARIS' : 'PUBLIC'
-    return {role: role}
+//Here we read the HTTP request and do some authentication.
+//If there is a 'credentials' header with the code 'IAmAMember', you're entitled
+//to some extra articles.
+//This returns the role.
+const getRoleFromRequest = function(req) {
+    return (req.get('credentials') === 'IAmAMember') ? 'MEMBER' : 'PUBLIC'
 }
 
-// Start de server
+// Start the server
 const app = express();
 
-// Voeg de GraphQL middleware toe en zorg ervoor dat bij elke request de
-//context gezet wordt.
+// Add the GraphQL-Express middleware and make sure we add the role to the "context" variable
+// This context will be passed to every resolver.
 app.use('/graphql', bodyParser.json(), graphqlExpress(req => {
-
     const context = {
-        user: getUserFromRequest(req)
+        role: getRoleFromRequest(req)
     }
     return {schema, context}
 }));
 
-// Activeer GraphiQL
+// Activate GraphiQL
 app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
 
-// Start de server
+// Start the server
 app.listen(3000, () => {
-  console.log('Ga naar http://localhost:3000/graphiql !');
+  console.log('Go to http://localhost:3000/graphiql !');
 });
